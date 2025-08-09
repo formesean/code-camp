@@ -107,8 +107,7 @@ export const adminRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // @ts-expect-error Generate Prisma client after schema change (Problem model)
-      const created = await ctx.db.problem.create({
+      const created = await (ctx.db as any).problem.create({
         data: {
           title: input.title,
           difficulty: input.difficulty as any,
