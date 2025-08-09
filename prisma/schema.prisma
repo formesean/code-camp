@@ -16,16 +16,10 @@ enum Role {
   admin
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
-
-    @@index([name])
+enum Difficulty {
+  Easy
+  Medium
+  Hard
 }
 
 // Necessary for Next auth
@@ -65,7 +59,8 @@ model User {
     role          Role      @default(competitor)
     accounts      Account[]
     sessions      Session[]
-    posts         Post[]
+    // relations
+    // problems     Problem[]
 }
 
 model VerificationToken {
@@ -74,4 +69,14 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+model Problem {
+  id          String      @id @default(cuid())
+  title       String
+  difficulty  Difficulty
+  tags        String[]
+  description String
+  examples    Json
+  createdAt   DateTime    @default(now())
 }
