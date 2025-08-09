@@ -14,15 +14,13 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
-      // ...other properties
-      // role: UserRole;
+      role: "competitor" | "admin";
     } & DefaultSession["user"];
   }
 
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
+  interface User {
+    role: "competitor" | "admin";
+  }
 }
 
 /**
@@ -46,13 +44,15 @@ export const authConfig = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
-  adapter: PrismaAdapter(db),
+  // Cast adapter to avoid versioned type mismatch from @auth/core
+  adapter: PrismaAdapter(db) as unknown as any,
   callbacks: {
     session: ({ session, user }) => ({
       ...session,
       user: {
         ...session.user,
         id: user.id,
+        role: user.role,
       },
     }),
   },

@@ -4,6 +4,7 @@ import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
+  adminProcedure,
 } from "~/server/api/trpc";
 
 export const postRouter = createTRPCRouter({
@@ -37,5 +38,10 @@ export const postRouter = createTRPCRouter({
 
   getSecretMessage: protectedProcedure.query(() => {
     return "you can now see this secret message!";
+  }),
+
+  // Example admin-only route
+  adminOnly: adminProcedure.query(() => {
+    return "top secret admin data";
   }),
 });
