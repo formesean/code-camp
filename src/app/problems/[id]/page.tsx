@@ -5,6 +5,8 @@ import { useRouter, useParams } from "next/navigation"
 import { Header } from "~/app/_components/header"
 import { api } from "~/trpc/react"
 import { ProblemView } from "../_components/problem-view"
+import { EditorPane } from "../_components/editor-pane"
+import { toast } from "sonner"
 
 export default function ProblemDetailPage() {
   const router = useRouter()
@@ -28,7 +30,7 @@ export default function ProblemDetailPage() {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-6xl px-2 py-4 sm:px-4 sm:py-6">
+      <main className="mx-auto max-w-7xl px-2 py-4 sm:px-4 sm:py-6">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-md border p-4 md:h-[calc(100vh-140px)] md:overflow-auto">
             {problemQuery.isLoading || !problemQuery.data ? (
@@ -45,12 +47,12 @@ export default function ProblemDetailPage() {
             )}
           </div>
           <div className="rounded-md border md:h-[calc(100vh-140px)]">
-            {/* <EditorPane
+            <EditorPane
               onSubmit={(code, language) => {
-                addSubmission({ userId: user.id, problemId: problem.id, language, code })
-                toast({ title: "Submitted", description: "Your solution was submitted (demo)." })
+                console.log("Submission (demo)", { problemId: id, language, code })
+                toast("Submitted. Your solution was sent (demo)")
               }}
-            /> */}
+            />
           </div>
         </div>
       </main>

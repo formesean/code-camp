@@ -5,7 +5,7 @@ import type { Problem } from "~/types/problem.types"
 
 export function ProblemView({ problem }: { problem: Problem }) {
   return (
-    <article className="space-y-4">
+    <article className="space-y-4 hover:select-none">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">{problem.title}</h1>
         <div className="flex items-center gap-2">

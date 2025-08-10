@@ -68,7 +68,7 @@ export function GenerateProblemDialog() {
           Generate with Gemini
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="w-[min(90vw,32rem)] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Generate Problem</DialogTitle>
           <DialogDescription>
@@ -87,18 +87,18 @@ export function GenerateProblemDialog() {
           <div className="rounded-md border p-3">
             {generated ? (
               <>
-                <div className="text-sm font-medium">{generated.title}</div>
-                <div className="text-muted-foreground mt-1 text-xs">
+                <div className="text-sm font-medium break-words">{generated.title}</div>
+                <div className="text-muted-foreground mt-1 text-xs break-words">
                   Difficulty: {generated.difficulty}
                 </div>
-                <p className="mt-2 text-sm">{generated.description}</p>
-                <div className="mt-2 text-xs">
+                <p className="mt-2 text-sm whitespace-pre-wrap break-words">{generated.description}</p>
+                <div className="mt-2 text-xs break-words">
                   Tags: {generated.tags.join(", ")}
                 </div>
                 {generated.examples?.length ? (
                   <div className="mt-3 space-y-2">
                     <div className="text-xs font-medium">Example</div>
-                    <pre className="bg-muted/40 overflow-auto rounded p-2 text-xs">
+                    <pre className="bg-muted/40 rounded p-2 text-xs whitespace-pre-wrap break-words">
                       {`Input: ${generated.examples[0]?.input}
 Output: ${generated.examples[0]?.output}
 Explanation: ${generated.examples[0]?.explanation}`}

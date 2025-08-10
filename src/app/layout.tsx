@@ -5,6 +5,7 @@ import { Geist } from "next/font/google";
 
 import { TRPCReactProvider } from "~/trpc/react";
 import { SessionProvider } from "next-auth/react";
+import { Toaster } from "~/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "CoDE Camp",
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body className="dark">
         <SessionProvider>
           <TRPCReactProvider>{children}</TRPCReactProvider>
+          <Toaster />
         </SessionProvider>
       </body>
     </html>

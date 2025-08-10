@@ -88,6 +88,7 @@ export function AdminSubmissions() {
               {grouped.length === 0 ? (
             <p className="text-sm text-muted-foreground">No submissions yet.</p>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -143,7 +144,7 @@ export function AdminSubmissions() {
                                       {g.users.map((u) => (
                                         <TableRow key={u.userId}>
                                           <TableCell className="font-medium">{u.name}</TableCell>
-                                          <TableCell className="text-xs sm:text-sm">{u.email}</TableCell>
+                                          <TableCell className="text-xs sm:text-sm break-all">{u.email}</TableCell>
                                           <TableCell className="text-xs">{u.latest?.language ?? "-"}</TableCell>
                                           <TableCell className="text-right">{u.totalSubmissions}</TableCell>
                                           <TableCell className="text-right">
@@ -180,12 +181,13 @@ export function AdminSubmissions() {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
 
       <Dialog open={codeDialog.open} onOpenChange={(o) => setCodeDialog((prev) => ({ ...prev, open: o }))}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-[90vw] sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>
               {codeDialog.userName ? `${codeDialog.userName}'s latest submission` : "Submission code"}
