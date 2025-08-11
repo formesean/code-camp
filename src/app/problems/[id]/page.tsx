@@ -1,6 +1,4 @@
 "use client"
-
-import { useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Header } from "~/app/_components/header"
 import { api } from "~/trpc/react"
@@ -13,6 +11,7 @@ export default function ProblemDetailPage() {
   const params = useParams()
   const id = String(params?.id ?? "")
   const problemQuery = api.problem.byId.useQuery({ id }, { enabled: id.length > 0 })
+  const submitMutation = api.problem.submit.useMutation()
 
   // If you want to protect this route, add auth check here.
 
@@ -48,9 +47,14 @@ export default function ProblemDetailPage() {
           </div>
           <div className="rounded-md border md:h-[calc(100vh-140px)]">
             <EditorPane
-              onSubmit={(code, language) => {
-                console.log("Submission (demo)", { problemId: id, language, code })
-                toast("Submitted. Your solution was sent (demo)")
+              onSubmit={async (code, language) => {
+                try {
+                  await submitMutation.mutateAsync({ problemId: id, language, code })
+                  toast("Submitted. Your solution was saved.")
+                } catch (err) {
+                  console.error(err)
+                  toast("Failed to submit. Please sign in or try again.")
+                }
               }}
             />
           </div>

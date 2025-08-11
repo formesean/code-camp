@@ -1,4 +1,4 @@
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, publicProcedure, protectedProcedure } from "~/server/api/trpc";
 import { z } from "zod";
 
 export const problemRouter = createTRPCRouter({
@@ -32,4 +32,25 @@ export const problemRouter = createTRPCRouter({
     });
     return problem ?? null;
   }),
+
+  submit: protectedProcedure
+    .input(
+      z.object({
+        problemId: z.string().min(1),
+        language: z.string().min(1),
+        code: z.string().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const created = await (ctx.db as any).submission.create({
+        data: {
+          userId: ctx.session.user.id,
+          problemId: input.problemId,
+          language: input.language,
+          code: input.code,
+        },
+        select: { id: true, createdAt: true },
+      });
+      return created;
+    }),
 });

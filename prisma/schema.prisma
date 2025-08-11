@@ -61,6 +61,7 @@ model User {
     sessions      Session[]
     // relations
     // problems     Problem[]
+    submissions   Submission[]
 }
 
 model VerificationToken {
@@ -79,4 +80,21 @@ model Problem {
   description String
   examples    Json
   createdAt   DateTime    @default(now())
+  submissions Submission[]
+}
+
+model Submission {
+  id         String   @id @default(cuid())
+  userId     String
+  problemId  String
+  language   String
+  code       String
+  createdAt  DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([problemId])
+  @@index([problemId, userId, createdAt])
 }
