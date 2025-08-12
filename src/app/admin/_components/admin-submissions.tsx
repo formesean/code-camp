@@ -1,19 +1,39 @@
 "use client"
 
 import { Fragment, useMemo, useState } from "react"
+import { useSession } from "next-auth/react"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "~/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
 import type { CodeDialogState } from "~/types/code-dialog-state.types"
+import { api, type RouterOutputs } from "~/trpc/react"
+
+type SubmissionItem = RouterOutputs["admin"]["listSubmissions"][number]
 
 export function AdminSubmissions() {
-  const { submissions, problems, users } = useData()
+  const { status } = useSession()
+  const submissionsQuery = api.admin.listSubmissions.useQuery(undefined, { enabled: status === "authenticated" })
+  const submissions = submissionsQuery.data
   const [expandedProblemId, setExpandedProblemId] = useState<string | null>(null)
   const [codeDialog, setCodeDialog] = useState<CodeDialogState>({ open: false })
 
   const grouped = useMemo(() => {
+    if (!submissions) return [] as Array<{
+      pid: string
+      problemTitle: string
+      total: number
+      languages: Array<{ lang: string; count: number }>
+      users: Array<{
+        userId: string
+        name: string
+        email: string
+        totalSubmissions: number
+        latest: SubmissionItem | undefined
+      }>
+    }>
+
     // Build group: problem -> languages breakdown, total, users who submitted
     const map = new Map<
       string,
@@ -26,30 +46,30 @@ export function AdminSubmissions() {
           string,
           {
             userId: string
-            submissions: typeof submissions
+            submissions: Array<SubmissionItem>
           }
         >
       }
     >()
 
     for (const s of submissions) {
-      const p = problems.find((x: { id: any }) => x.id === s.problemId)
-      if (!p) continue
-      if (!map.has(p.id)) {
-        map.set(p.id, {
-          pid: p.id,
-          problemTitle: p.title,
+      const pid = s.problemId
+      const ptitle = s.problem?.title ?? "(Untitled)"
+      if (!map.has(pid)) {
+        map.set(pid, {
+          pid,
+          problemTitle: ptitle,
           total: 0,
           byLang: new Map(),
           byUser: new Map(),
         })
       }
-      const entry = map.get(p.id)!
+      const entry = map.get(pid)!
       entry.total += 1
       entry.byLang.set(s.language, (entry.byLang.get(s.language) ?? 0) + 1)
 
       if (!entry.byUser.has(s.userId)) {
-        entry.byUser.set(s.userId, { userId: s.userId, submissions: [] as typeof submissions })
+        entry.byUser.set(s.userId, { userId: s.userId, submissions: [] as Array<SubmissionItem> })
       }
       entry.byUser.get(s.userId)!.submissions.push(s)
     }
@@ -63,9 +83,11 @@ export function AdminSubmissions() {
         languages: Array.from(v.byLang.entries()).map(([lang, count]) => ({ lang, count })),
         users: Array.from(v.byUser.values()).map((u) => {
           // latest submission by createdAt
-          const sorted = [...u.submissions].sort((a, b) => b.createdAt - a.createdAt)
+          const sorted = [...u.submissions].sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          )
           const latest = sorted[0]
-          const userMeta = users.find((uu: { id: string }) => uu.id === u.userId)
+          const userMeta = latest?.user
           return {
             userId: u.userId,
             name: userMeta?.name ?? "Unknown",
@@ -76,7 +98,7 @@ export function AdminSubmissions() {
         }),
       }))
       .sort((a, b) => b.total - a.total)
-  }, [submissions, problems, users])
+  }, [submissions])
 
   return (
     <>
@@ -85,7 +107,9 @@ export function AdminSubmissions() {
           <CardTitle>Submissions (grouped by problem and language)</CardTitle>
         </CardHeader>
         <CardContent>
-              {grouped.length === 0 ? (
+              {submissionsQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading submissions…</p>
+          ) : grouped.length === 0 ? (
             <p className="text-sm text-muted-foreground">No submissions yet.</p>
           ) : (
             <div className="overflow-x-auto">

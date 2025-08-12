@@ -11,6 +11,22 @@ import {
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
 export const adminRouter = createTRPCRouter({
+  listSubmissions: adminProcedure.query(async ({ ctx }) => {
+    const submissions = await ctx.db.submission.findMany({
+      select: {
+        id: true,
+        problemId: true,
+        userId: true,
+        language: true,
+        code: true,
+        createdAt: true,
+        user: { select: { id: true, name: true, email: true } },
+        problem: { select: { id: true, title: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return submissions;
+  }),
   generateProblem: adminProcedure
     .input(z.object({ prompt: z.string().min(1) }))
     .mutation(async ({ input }) => {
