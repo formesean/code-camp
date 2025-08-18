@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from "~/components/ui/table"
 import { api } from "~/trpc/react"
 import { AdminSubmissions } from "./_components/admin-submissions"
+import { BreadboardingSubmissions } from "./_components/breadboarding-submissions"
 
 export default function AdminPage() {
   const router = useRouter()
@@ -41,10 +42,10 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle>Users</CardTitle>
               </CardHeader>
-          <CardContent>
-            {usersQuery.isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading users</p>
-            ) : !usersQuery.data || usersQuery.data.length === 0 ? (
+              <CardContent>
+                {usersQuery.isLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading users</p>
+                ) : !usersQuery.data || usersQuery.data.length === 0 ? (
                   <p className="text-sm text-muted-foreground">{"No users yet."}</p>
                 ) : (
                   <Table>
@@ -56,11 +57,11 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                  {usersQuery.data.map((u) => (
+                      {usersQuery.data.map((u) => (
                         <TableRow key={u.id}>
-                      <TableCell className="font-medium">{u.name ?? "-"}</TableCell>
-                      <TableCell>{u.email ?? "-"}</TableCell>
-                      <TableCell className="capitalize">{u.role}</TableCell>
+                          <TableCell className="font-medium">{u.name ?? "-"}</TableCell>
+                          <TableCell>{u.email ?? "-"}</TableCell>
+                          <TableCell className="capitalize">{u.role}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -71,6 +72,8 @@ export default function AdminPage() {
           </TabsContent>
           <TabsContent value="submissions" className="mt-4">
             <AdminSubmissions />
+            <div className="h-4" />
+            <BreadboardingSubmissions />
           </TabsContent>
         </Tabs>
       </main>
