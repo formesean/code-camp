@@ -28,7 +28,12 @@ export const adminRouter = createTRPCRouter({
     return submissions;
   }),
   generateProblem: adminProcedure
-    .input(z.object({ prompt: z.string().min(1) }))
+    .input(
+      z.object({
+        prompt: z.string().min(1),
+        category: z.enum(["programming", "breadboarding"]).optional(),
+      }),
+    )
     .mutation(async ({ input }) => {
       const schema = z.object({
         title: z.string(),
@@ -48,8 +53,13 @@ export const adminRouter = createTRPCRouter({
 
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-      const prompt = `
-        You are a coding problem generator for programming contests.
+      const isBreadboarding = input.category === "breadboarding";
+      const roleInstructions = isBreadboarding
+        ? `You are an electronics and breadboarding problem generator. Create concise, practical circuit-building problems suitable for breadboard implementation.`
+        : `You are a programming problem generator for algorithms and coding interviews.`;
+
+      const finalPrompt = `
+        ${roleInstructions}
         Respond ONLY with valid JSON matching this schema:
         {
           "title": string,
@@ -73,7 +83,7 @@ export const adminRouter = createTRPCRouter({
 
       let text: string;
       try {
-        const result = await model.generateContent(prompt);
+        const result = await model.generateContent(finalPrompt);
         text = result.response.text().trim();
       } catch (err) {
         throw new TRPCError({
@@ -120,6 +130,10 @@ export const adminRouter = createTRPCRouter({
         examples: z
           .array(z.object({ input: z.string(), output: z.string(), explanation: z.string() }))
           .min(1),
+        category: z.enum(["programming", "breadboarding"]).optional(),
+        requiredDeliverables: z
+          .array(z.enum(["truth_table", "sop", "pos", "diagram"]))
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -130,6 +144,8 @@ export const adminRouter = createTRPCRouter({
           tags: input.tags,
           description: input.description,
           examples: input.examples as unknown as any,
+          category: (input.category ?? "programming") as any,
+          requiredDeliverables: (input.requiredDeliverables ?? []) as any,
         },
         select: { id: true },
       });

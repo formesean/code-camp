@@ -21,20 +21,17 @@ import {
 } from "~/components/ui/tabs";
 
 import { api } from "~/trpc/react";
-
-type Difficulty = "Easy" | "Medium" | "Hard";
+import type { Difficulty } from "~/types/difficulty.types";
+import type { Problem } from "~/types/problem.types";
 
 export function GenerateProblemDialog() {
-  const [prompt, setPrompt] = useState<string>("");
+  const [programmingPrompt, setProgrammingPrompt] = useState<string>("");
+  const [breadboardingPrompt, setBreadboardingPrompt] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<"programming" | "breadboarding">("programming");
   const [open, setOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [generated, setGenerated] = useState<{
-    title: string;
-    difficulty: Difficulty;
-    tags: string[];
-    description: string;
-    examples: Array<{ input: string; output: string; explanation: string }>;
-  } | null>(null);
+  type GeneratedProblem = Omit<Problem, "id">;
+  const [generated, setGenerated] = useState<GeneratedProblem | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const generateMutation = api.admin.generateProblem.useMutation();
@@ -44,7 +41,7 @@ export function GenerateProblemDialog() {
       setGenerated(null);
       setErrorMessage(null);
     }
-  }, [prompt]);
+  }, [programmingPrompt, breadboardingPrompt]);
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
@@ -52,9 +49,10 @@ export function GenerateProblemDialog() {
       setIsAdding(false);
       setGenerated(null);
       setErrorMessage(null);
-      setPrompt("");
-      if (typeof (generateMutation as any).reset === "function") {
-        (generateMutation as any).reset();
+      setProgrammingPrompt("");
+      setBreadboardingPrompt("");
+      if (typeof generateMutation.reset === "function") {
+        generateMutation.reset();
       }
     }
   };
@@ -62,8 +60,18 @@ export function GenerateProblemDialog() {
   const addProblemMutation = api.admin.createProblem.useMutation();
   const addProblem = async () => {
     if (!generated) return;
-    await addProblemMutation.mutateAsync(generated);
+    const payload = {
+      ...generated,
+      examples: generated.examples.map((ex) => ({
+        input: ex.input,
+        output: ex.output,
+        explanation: ex.explanation ?? "",
+      })),
+    };
+    await addProblemMutation.mutateAsync(payload);
   };
+
+  const currentPrompt = activeTab === "programming" ? programmingPrompt : breadboardingPrompt;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -81,98 +89,30 @@ export function GenerateProblemDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="programming" className="w-full">
+        <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="programming">Programming</TabsTrigger>
-            <TabsTrigger value="breadboarding">Breadboarding</TabsTrigger>
+            <TabsTrigger value="programming" className="hover:cursor-pointer">Programming</TabsTrigger>
+            <TabsTrigger value="breadboarding" className="hover:cursor-pointer">Breadboarding</TabsTrigger>
           </TabsList>
 
           <TabsContent value="programming">
-            <div className="space-y-3">
-              <label className="text-sm font-medium">Prompt</label>
-              <Textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe the programming problem you want to generate..."
-                disabled={isAdding}
-              />
-              <div className="rounded-md border p-3">
-                {generated ? (
-                  <>
-                    <div className="text-sm font-medium break-words">
-                      {generated.title}
-                    </div>
-                    <div className="text-muted-foreground mt-1 text-xs break-words">
-                      Difficulty: {generated.difficulty}
-                    </div>
-                    <p className="mt-2 text-sm whitespace-pre-wrap break-words">
-                      {generated.description}
-                    </p>
-                    <div className="mt-2 text-xs break-words">
-                      Tags: {generated.tags.join(", ")}
-                    </div>
-                    {generated.examples?.length ? (
-                      <div className="mt-3 space-y-2">
-                        <div className="text-xs font-medium">Example</div>
-                        <pre className="bg-muted/40 rounded p-2 text-xs whitespace-pre-wrap break-words">
-                          {`Input: ${generated.examples[0]?.input}
-Output: ${generated.examples[0]?.output}
-Explanation: ${generated.examples[0]?.explanation}`}
-                        </pre>
-                      </div>
-                    ) : null}
-                  </>
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    No preview yet. Enter a prompt and click Generate.
-                  </p>
-                )}
-              </div>
-            </div>
+            <PromptAndPreview
+              prompt={programmingPrompt}
+              setPrompt={setProgrammingPrompt}
+              disabled={isAdding}
+              generated={generated}
+              placeholder="Describe the programming problem you want to generate..."
+            />
           </TabsContent>
 
           <TabsContent value="breadboarding">
-            <div className="space-y-3">
-              <label className="text-sm font-medium">Prompt</label>
-              <Textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe the breadboarding problem you want to generate..."
-                disabled={isAdding}
-              />
-              <div className="rounded-md border p-3">
-                {generated ? (
-                  <>
-                    <div className="text-sm font-medium break-words">
-                      {generated.title}
-                    </div>
-                    <div className="text-muted-foreground mt-1 text-xs break-words">
-                      Difficulty: {generated.difficulty}
-                    </div>
-                    <p className="mt-2 text-sm whitespace-pre-wrap break-words">
-                      {generated.description}
-                    </p>
-                    <div className="mt-2 text-xs break-words">
-                      Tags: {generated.tags.join(", ")}
-                    </div>
-                    {generated.examples?.length ? (
-                      <div className="mt-3 space-y-2">
-                        <div className="text-xs font-medium">Example</div>
-                        <pre className="bg-muted/40 rounded p-2 text-xs whitespace-pre-wrap break-words">
-                          {`Input: ${generated.examples[0]?.input}
-Output: ${generated.examples[0]?.output}
-Explanation: ${generated.examples[0]?.explanation}`}
-                        </pre>
-                      </div>
-                    ) : null}
-                  </>
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    No preview yet. Enter a prompt and click Generate.
-                  </p>
-                )}
-              </div>
-            </div>
+            <PromptAndPreview
+              prompt={breadboardingPrompt}
+              setPrompt={setBreadboardingPrompt}
+              disabled={isAdding}
+              generated={generated}
+              placeholder="Describe the breadboarding problem you want to generate..."
+            />
           </TabsContent>
         </Tabs>
 
@@ -186,14 +126,17 @@ Explanation: ${generated.examples[0]?.explanation}`}
               setIsAdding(true);
               try {
                 setErrorMessage(null);
-                const promptText = prompt.trim();
+                const promptText = currentPrompt.trim();
                 if (!generated) {
                   if (promptText.length === 0) {
                     setErrorMessage("Please enter a prompt.");
                     return;
                   }
+                  const categoryPrefix = activeTab === "breadboarding"
+                    ? "Category: Breadboarding and electronics circuit design. Generate an electronics breadboarding problem.\n"
+                    : "Category: Programming and algorithms. Generate a programming problem.\n";
                   const g = await generateMutation.mutateAsync({
-                    prompt: promptText,
+                    prompt: `${categoryPrefix}${promptText}`,
                   });
                   setGenerated(g);
                 } else {
@@ -211,7 +154,7 @@ Explanation: ${generated.examples[0]?.explanation}`}
                 setIsAdding(false);
               }
             }}
-            disabled={isAdding || prompt.trim().length === 0}
+            disabled={isAdding || currentPrompt.trim().length === 0}
             className="hover:cursor-pointer"
           >
             {isAdding
@@ -225,5 +168,62 @@ Explanation: ${generated.examples[0]?.explanation}`}
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function PromptAndPreview(props: {
+  prompt: string;
+  setPrompt: (value: string) => void;
+  disabled: boolean;
+  generated: Omit<Problem, "id"> | null;
+  placeholder: string;
+}) {
+  const { prompt, setPrompt, disabled, generated, placeholder } = props;
+  return (
+    <div className="space-y-3">
+      <Textarea
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        placeholder={placeholder}
+        disabled={disabled}
+      />
+      <div className="rounded-md border p-3">
+        {generated ? (
+          <GeneratedPreview generated={generated} />
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            No preview yet. Enter a prompt and click Generate.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GeneratedPreview(props: { generated: Omit<Problem, "id"> }) {
+  const { generated } = props;
+  const firstExample = generated.examples?.[0];
+  const explanation = firstExample?.explanation;
+  return (
+    <>
+      <div className="text-sm font-medium break-words">{generated.title}</div>
+      <div className="text-muted-foreground mt-1 text-xs break-words">
+        Difficulty: {generated.difficulty as Difficulty}
+      </div>
+      <p className="mt-2 text-sm whitespace-pre-wrap break-words">
+        {generated.description}
+      </p>
+      <div className="mt-2 text-xs break-words">
+        Tags: {generated.tags.join(", ")}
+      </div>
+      {firstExample ? (
+        <div className="mt-3 space-y-2">
+          <div className="text-xs font-medium">Example</div>
+          <pre className="bg-muted/40 rounded p-2 text-xs whitespace-pre-wrap break-words">{`Input: ${firstExample.input}
+Output: ${firstExample.output}
+${explanation ? `Explanation: ${explanation}` : ""}`}</pre>
+        </div>
+      ) : null}
+    </>
   );
 }

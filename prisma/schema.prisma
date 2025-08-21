@@ -22,6 +22,23 @@ enum Difficulty {
   Hard
 }
 
+enum ProblemCategory {
+  programming
+  breadboarding
+}
+
+enum BreadboardDeliverable {
+  truth_table
+  sop
+  pos
+  diagram
+}
+
+enum SubmissionKind {
+  programming
+  breadboarding
+}
+
 // Necessary for Next auth
 model Account {
     id                       String  @id @default(cuid())
@@ -79,6 +96,8 @@ model Problem {
   tags        String[]
   description String
   examples    Json
+  category    ProblemCategory       @default(programming)
+  requiredDeliverables BreadboardDeliverable[] @default([])
   createdAt   DateTime    @default(now())
   submissions Submission[]
 }
@@ -87,8 +106,12 @@ model Submission {
   id         String   @id @default(cuid())
   userId     String
   problemId  String
-  language   String
-  code       String
+  kind       SubmissionKind @default(programming)
+  language   String?
+  code       String?
+  // For breadboarding submissions, deliverables payload keyed by deliverable type
+  // e.g. { "truth_table": {...}, "sop": "...", "pos": "...", "diagram": "data-uri-or-url" }
+  deliverables Json?
   createdAt  DateTime @default(now())
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
